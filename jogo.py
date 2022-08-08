@@ -5,10 +5,9 @@ import copy
 ATEMPED_PLAYS = 0
 
 def draw_game(g: np.ndarray, ax: plt.Axes):
-    return
     ax.cla()
     ax.matshow(g, vmin=-1, vmax=1)
-    plt.pause(0.01)
+    plt.pause(0.3)
 
 class Jogo:
     def __init__(self):
@@ -42,29 +41,31 @@ class Jogo:
         global ATEMPED_PLAYS
         ATEMPED_PLAYS = ATEMPED_PLAYS + 1
 
-        if(p0<0 or p1<0 or p0>6 or p1>6):#if position exists
-            print('invalid position something went wrong')
-            return -1
+        #as coisas comentadas têm haver com nao serem necessarios esse checks
 
-        if(p0+pl0<0 or p0+pl0>6 or p1+pl1<0 or p1+pl1>6):#play out of bounds
-            print('play out of bounds,something went wrong!')
-            return -1
+        #if(p0<0 or p1<0 or p0>6 or p1>6):#if position exists
+        #    print('invalid position something went wrong')
+        #    return -1
 
-        if(p0+pl0*2<0 or p0+pl0*2>6 or p1+pl1*2<0 or p1+pl1*2>6):#play out of bounds
-            print('end position out of bounds,something went wrong!')
-            return -1
+        #if(p0+pl0<0 or p0+pl0>6 or p1+pl1<0 or p1+pl1>6):#play out of bounds
+        #    print('play out of bounds,something went wrong!')
+        #    return -1
 
-        if(self.tabuleiro[p0,p1]!=1):# ball in position
-            print('ball not in position!')
-            return -1
+        #if(p0+pl0*2<0 or p0+pl0*2>6 or p1+pl1*2<0 or p1+pl1*2>6):#play out of bounds
+        #    print('end position out of bounds,something went wrong!')
+        #    return -1
 
-        if(self.tabuleiro[p0+pl0,p1+pl1]!=1):
-            print('there s no ball to jump')
-            return -1
+        #if(self.tabuleiro[p0,p1]!=1):# ball in position
+        #    print('ball not in position!')
+        #    return -1
 
-        if(self.tabuleiro[p0+pl0*2,p1+pl1*2]!=0):
-            print('end position isnt empty')
-            return -1
+        #if(self.tabuleiro[p0+pl0,p1+pl1]!=1):
+        #    print('there s no ball to jump')
+        #    return -1
+
+        #if(self.tabuleiro[p0+pl0*2,p1+pl1*2]!=0):
+        #    print('end position isnt empty')
+        #    return -1
 
         self.tabuleiro[p0,p1]=0
         self.tabuleiro[p0+pl0,p1+pl1]=0
@@ -116,7 +117,7 @@ class Solver:
         self.dictionary = {}
 
     def solve(self,jogo,ax,depth):
-        marbles=jogo.get_marbles()
+        #marbles=jogo.get_marbles()
         print(f"{depth=}, {ATEMPED_PLAYS=}")
 
         key = jogo.tabuleiro.tobytes()
@@ -125,20 +126,17 @@ class Solver:
             return 0
         self.dictionary[key] = 1
 
-        if marbles == 1:
+
+        if depth == 0:
             return 1
         plays = self.get_plays(jogo)
         for play in plays:
             jogo2 = copy.deepcopy(jogo)
             jogo2.play(*play)
-            #print(play)
-            #print(jogo2.tabuleiro)
 
-            draw_game(jogo2.tabuleiro, ax)
-            #plt.pause(0.01)
 
-            if (self.solve(jogo2,ax,depth+1)) == 1 :
-                self.winning_moves[depth] = play
+            if (self.solve(jogo2,ax,depth-1)) == 1 :
+                self.winning_moves[depth-1] = play
                 return 1
         return 0
 
@@ -146,7 +144,7 @@ class Solver:
         movement=[]
         for i, row in enumerate(jogo.tabuleiro):
             for j, position in enumerate(row):
-                position = (i, j)
+                position = [i, j]
                 if jogo.tabuleiro[i, j] == 1:
                     for play in self.directions:
                         if (self.possible_play(jogo.tabuleiro, position, play) == 1):
@@ -159,9 +157,9 @@ class Solver:
         pl0=play[0]
         pl1=play[1]
 
-        if(p0<0 or p1<0 or p0>6 or p1>6):#if position exists
-            #print('invalid position something went wrong')
-            return -1
+        #if(p0<0 or p1<0 or p0>6 or p1>6):#if position exists
+        #   print('invalid position something went wrong')
+        #   return -1
 
         if(p0+pl0<0 or p0+pl0>6 or p1+pl1<0 or p1+pl1>6):#play out of bounds
             #print('play out of bounds,something went wrong!')
@@ -171,9 +169,9 @@ class Solver:
             #print('end position out of bounds,something went wrong!')
             return -1
 
-        if(tabuleiro[p0,p1]!=1):# ball in position
+        #if(tabuleiro[p0,p1]!=1):# ball in position
             #print('ball not in position!')
-            return -1
+        #   return -1
 
         if(tabuleiro[p0+pl0,p1+pl1]!=1):
             #print('there s no ball to jump')
@@ -194,14 +192,23 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
 
     draw_game(jogo.tabuleiro, ax)
-    #plt.pause(1)
 
     solver = Solver()
-    solver.solve(jogo,ax,0)
+    marbles=jogo.get_marbles()
+    solver.winning_moves=[None]*(marbles-1)
+    solver.solve(jogo,ax,marbles-1)
+
+    solver.winning_moves.reverse()
+
     with open("data.pkl", "wb") as f:
         pickle.dump(solver.winning_moves, f)
     print("Winning moves:")
     print(solver.winning_moves)
+
+    jogo.reset()
+    for move in solver.winning_moves:
+        jogo.play(*move)
+        draw_game(jogo.tabuleiro, ax)
 
 #    exit = True
 #    while exit :
