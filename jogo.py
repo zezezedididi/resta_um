@@ -128,7 +128,10 @@ class Solver:
 
 
         if depth == 0:
-            return 1
+            if(jogo.tabuleiro[3][3]==1):
+                return 1
+            else:
+                return 0
         plays = self.get_plays(jogo)
         for play in plays:
             jogo2 = copy.deepcopy(jogo)
